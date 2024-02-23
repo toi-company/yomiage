@@ -1,0 +1,9 @@
+version: '3'
+services:
+  bot:
+    image: yomiage
+    build: docker/coeiroink
+    volumes:
+      - ./coeiroink/:/src
+    ports:
+      - "50031:50031"

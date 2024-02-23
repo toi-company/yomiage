@@ -1,0 +1,174 @@
+diff --git a/run.py b/run.py
+index 3467196..58ecdd8 100644
+--- a/run.py
++++ b/run.py
+@@ -1397,7 +1397,7 @@ def main() -> None:
+     parser.add_argument(
+         "--host", type=str, default="127.0.0.1", help="謗･邯壹ｒ蜿励￠莉倥￠繧九・繧ｹ繝医い繝峨Ξ繧ｹ縺ｧ縺吶・
+     )
+-    parser.add_argument("--port", type=int, default=50021, help="謗･邯壹ｒ蜿励￠莉倥￠繧九・繝ｼ繝育分蜿ｷ縺ｧ縺吶・)
++    parser.add_argument("--port", type=int, default=50031, help="謗･邯壹ｒ蜿励￠莉倥￠繧九・繝ｼ繝育分蜿ｷ縺ｧ縺吶・)
+     parser.add_argument("--use_gpu", action="store_true", help="GPU繧剃ｽｿ縺｣縺ｦ髻ｳ螢ｰ蜷域・縺吶ｋ繧医≧縺ｫ縺ｪ繧翫∪縺吶・)
+     parser.add_argument(
+         "--voicevox_dir", type=Path, default=None, help="VOICEVOX縺ｮ繝・ぅ繝ｬ繧ｯ繝医Μ繝代せ縺ｧ縺吶・
+diff --git a/voicevox_engine/core/core_initializer.py b/voicevox_engine/core/core_initializer.py
+index 66c7ca2..20345f3 100644
+--- a/voicevox_engine/core/core_initializer.py
++++ b/voicevox_engine/core/core_initializer.py
+@@ -77,7 +77,7 @@ def initialize_cores(
+     # 繧ｳ繧｢繧偵Ο繝ｼ繝峨＠ `cores` 縺ｸ逋ｻ骭ｲ縺吶ｋ
+     cores: dict[str, CoreAdapter] = {}
+ 
+-    if not enable_mock:
++    if not True:
+ 
+         def load_core_library(core_dir: Path, suppress_error: bool = False) -> None:
+             """
+diff --git a/voicevox_engine/dev/core/mock.py b/voicevox_engine/dev/core/mock.py
+index 25190ea..fcdedbe 100644
+--- a/voicevox_engine/dev/core/mock.py
++++ b/voicevox_engine/dev/core/mock.py
+@@ -5,7 +5,7 @@ import numpy as np
+ from numpy.typing import NDArray
+ 
+ from ...core.core_wrapper import CoreWrapper
+-
++from coeirocore.coeiro_manager import MetaManager
+ 
+ class MockCoreWrapper(CoreWrapper):
+     """`CoreWrapper` Mock"""
+@@ -20,52 +20,7 @@ class MockCoreWrapper(CoreWrapper):
+         self.default_sampling_rate = 24000
+ 
+     def metas(self) -> str:
+-        return json.dumps(
+-            [
+-                # 繝医・繧ｯ・偵▽繝ｻ繝上Α繝ｳ繧ｰ・偵▽
+-                {
+-                    "name": "dummy1",
+-                    "styles": [
+-                        {"name": "style0", "id": 0},
+-                        {"name": "style1", "id": 2},
+-                        {"name": "style2", "id": 4, "type": "frame_decode"},
+-                        {"name": "style3", "id": 6, "type": "frame_decode"},
+-                    ],
+-                    "speaker_uuid": "7ffcb7ce-00ec-4bdc-82cd-45a8889e43ff",
+-                    "version": "mock",
+-                },
+-                # 繝医・繧ｯ・偵▽繝ｻ繝上Α繝ｳ繧ｰ・代▽繝ｻ繧ｽ繝ｳ繧ｰ・代▽
+-                {
+-                    "name": "dummy2",
+-                    "styles": [
+-                        {"name": "style0", "id": 1},
+-                        {"name": "style1", "id": 3},
+-                        {"name": "style2", "id": 5, "type": "frame_decode"},
+-                        {"name": "style3", "id": 7, "type": "sing"},
+-                    ],
+-                    "speaker_uuid": "388f246b-8c41-4ac1-8e2d-5d79f3ff56d9",
+-                    "version": "mock",
+-                },
+-                # 繝医・繧ｯ・代▽
+-                {
+-                    "name": "dummy3",
+-                    "styles": [
+-                        {"name": "style0", "id": 8},
+-                    ],
+-                    "speaker_uuid": "35b2c544-660e-401e-b503-0e14c635303a",
+-                    "version": "mock",
+-                },
+-                # 繧ｽ繝ｳ繧ｰ・代▽
+-                {
+-                    "name": "dummy4",
+-                    "styles": [
+-                        {"name": "style0", "id": 9, "type": "sing"},
+-                    ],
+-                    "speaker_uuid": "b1a81618-b27b-40d2-b0ea-27a9ad408c4b",
+-                    "version": "mock",
+-                },
+-            ]
+-        )
++        return json.dumps(MetaManager().get_metas_dict())
+ 
+     def yukarin_s_forward(
+         self, length: int, phoneme_list: NDArray[np.int64], style_id: NDArray[np.int64]
+diff --git a/voicevox_engine/dev/tts_engine/mock.py b/voicevox_engine/dev/tts_engine/mock.py
+index 9373cb0..f2ad131 100644
+--- a/voicevox_engine/dev/tts_engine/mock.py
++++ b/voicevox_engine/dev/tts_engine/mock.py
+@@ -11,6 +11,8 @@ from ...metas.Metas import StyleId
+ from ...model import AudioQuery
+ from ...tts_pipeline.tts_engine import TTSEngine, to_flatten_moras
+ from ..core.mock import MockCoreWrapper
++from coeirocore.coeiro_manager import AudioManager
++from coeirocore.query_manager import query2tokens_prosody
+ 
+ 
+ class MockTTSEngine(TTSEngine):
+@@ -19,6 +21,13 @@ class MockTTSEngine(TTSEngine):
+     def __init__(self):
+         super().__init__(MockCoreWrapper())
+ 
++        self.default_sampling_rate = 44100
++
++        self.audio_manager = AudioManager(
++            fs=self.default_sampling_rate,
++            use_gpu=False
++        )
++
+     def synthesize_wave(
+         self,
+         query: AudioQuery,
+@@ -26,48 +35,15 @@ class MockTTSEngine(TTSEngine):
+         enable_interrogative_upspeak: bool = True,
+     ) -> NDArray[np.float32]:
+         """髻ｳ螢ｰ蜷域・逕ｨ縺ｮ繧ｯ繧ｨ繝ｪ縺ｫ蜷ｫ縺ｾ繧後ｋ隱ｭ縺ｿ莉ｮ蜷阪↓蝓ｺ縺･縺・※OpenJTalk縺ｧ髻ｳ螢ｰ豕｢蠖｢繧堤函謌舌☆繧・""
+-        # 繝｢繝ｼ繝輔ぅ繝ｳ繧ｰ譎ゅ↑縺ｩ縺ｫ蜷御ｸ蜿ら・縺ｮquery縺ｧ隍・焚蝗槫他縺ｰ繧後ｋ蜿ｯ閭ｽ諤ｧ縺後≠繧九・縺ｧ縲∝・縺ｮ蠑墓焚縺ｮquery縺ｫ遐ｴ螢顔噪螟画峩繧定｡後ｏ縺ｪ縺・-        query = copy.deepcopy(query)
+-
+-        # recall text in katakana
+-        flatten_moras = to_flatten_moras(query.accent_phrases)
+-        kana_text = "".join([mora.text for mora in flatten_moras])
+-
+-        wave = self.forward(kana_text)
+-
+-        # volume
+-        wave *= query.volumeScale
+-
+-        return wave
+-
+-    def forward(self, text: str, **kwargs: dict[str, Any]) -> NDArray[np.float32]:
+-        """
+-        forward tts via pyopenjtalk.tts()
+-        蜿ら・竊探TSEngine 縺ｮdocstring [Mock]
+-
+-        Parameters
+-        ----------
+-        text : str
+-            蜈･蜉帶枚蟄怜・・井ｾ具ｼ夊ｪｭ縺ｿ荳翫￡縺溘＞譁・ｫ繧偵き繧ｿ繧ｫ繝翫↓縺励◆譁・ｭ怜・縲∫ｭ会ｼ・-
+-        Returns
+-        -------
+-        wave [NDArray[np.float32]]
+-            髻ｳ螢ｰ豕｢蠖｢繝・・繧ｿ繧誰umPy驟榊・縺ｧ霑斐＠縺ｾ縺・-
+-        Note
+-        -------
+-        縺薙％縺ｧ陦後≧髻ｳ螢ｰ蜷域・縺ｧ縺ｯ縲∬ｪｿ螢ｰ・医ヴ繝・メ遲会ｼ峨ｒ蜿肴丐縺励↑縺・-
+-        # pyopenjtalk.tts()縺ｮ蜃ｺ蜉帑ｻ墓ｧ・-        dtype=np.float64, 16 bit, mono 48000 Hz
+-
+-        # resample縺ｮ隱ｬ譏・-        髱槭Δ繝・け螳溯｣・ｼ・ecode_forward・峨→蜷医ｏ縺帙ｋ縺溘ａ縺ｫ縲∝・蜉帙ｒ24kHz縲・2bit豬ｮ蜍募ｰ乗焚縺ｫ螟画鋤縺励◆縲・-        """
+-        logger = getLogger("uvicorn")  # FastAPI / Uvicorn 蜀・°繧峨・蛻ｩ逕ｨ縺ｮ縺溘ａ
+-        logger.info("[Mock] input text: %s" % text)
+-        wave, sr = tts(text)
+-        wave /= 2**15
+-        wave = resample(wave, 48000, 24000)
+-        return wave.astype(np.float32)
++        tokens = query2tokens_prosody(query)
++        return self.audio_manager.synthesis(
++            text=tokens,
++            style_id=style_id,
++            speed_scale=query.speedScale,
++            volume_scale=query.volumeScale,
++            pitch_scale=query.pitchScale,
++            intonation_scale=query.intonationScale,
++            pre_phoneme_length=query.prePhonemeLength,
++            post_phoneme_length=query.postPhonemeLength,
++            output_sampling_rate=query.outputSamplingRate
++        )
